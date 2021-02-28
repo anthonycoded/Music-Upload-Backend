@@ -12,8 +12,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cors());
 app.use("/public", express.static("public"));
-app.use("/tasks", taskRoute);
-app.use("/wishes", wishRoute);
+app.use("/tracks", trackRoute);
 
 // 404 Error
 app.use((req, res, next) => {
@@ -34,7 +33,7 @@ app.listen(PORT, () => {
 //connect to MongoDB Atlas
 mongoose
   .connect(
-    "mongodb+srv://shawnbarbel:2Swisshype@cluster0.h0ykg.gcp.mongodb.net/<Wishlist>?retryWrites=true&w=majority"
+    "mongodb+srv://admin:2swisshype@cluster0.uxrqf.mongodb.net/beats?retryWrites=true&w=majority"
   )
   .then(() => {
     console.log("Successfully connected to MongoDB Atlas!");

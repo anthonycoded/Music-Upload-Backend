@@ -2,39 +2,69 @@ let mongoose = require("mongoose"),
   express = require("express"),
   multer = require("multer"),
   router = express.Router();
+const DIR = "./public/";
 
-const bucketName = 'Name of a bucket, e.g. my-bucket';
-const storageClass = 'Name of a storage class, e.g. coldline';
-const location = 'Name of a location, e.g. ASIA';
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, DIR);
+  },
+  filename: (req, file, cb) => {
+    const fileName = file.originalname.toLowerCase().split("").join("-");
+    cb(null, uuid + "-" + fileName);
+  },
+});
 
-var multerStorage = multer.memoryStorage();
 var upload = multer({
-  storage: multerStorage,
+  storage: storage,
   fileFilter: (req, file, cb) => {
     if (
-      file.mimetype == "audio/mpeg" ||
-      file.mimetype === "audio/mp4" ||
-      file.mimetype == "audio/mpeg"
+      file.mimetype == "image/png" ||
+      file.mimetype === "image/jpg" ||
+      file.mimetype == "image/jpeg"
     ) {
       cb(null, true);
     } else {
       cb(null, false);
-      return cb(new Error("Only MP3, MP4, or Mpeg format allowed!"));
+      return cb(new Error("Only .png, .jpg, and.jpeg format allowed!"));
     }
   },
 });
 
-let trackSchema = require("../Models/track");
+let wishSchema = require("../Models/Wish");
 
-// Imports the Google Cloud client library // Creates a client
-const {Storage} = require('@google-cloud/storage');
-const storage = new Storage();
-const bucket = 
 //Create new Wishlist item
-router.post("/upload-track", upload.single("track"), (req, res, next) => {
+router.post("/new-wish", upload.single("image"), (req, res, next) => {
   const url = req.protocol + "://" + req.get("host");
 
-  
+  const wish = new wishSchema({
+    _id: new mongoose.Types.ObjectId(),
+    title: req.body.title,
+    description: req.body.description,
+    price: req.body.price,
+    image: url + "/public/" + req.file.filename,
+    source: req.body.source,
+    reservedBy: req.body.reservedBy,
+    amazonUrl: req.body.amazonUrl,
+    walmartUrl: req.body.walmartUrl,
+    otherUrl: req.body.otherUrl,
+  });
+  wish
+    .save()
+    .then((result) => {
+      res.status(201).json({
+        message: "New wish created successfully",
+        wishCreated: {
+          _id: result._id,
+          image: result.image,
+        },
+      });
+    })
+    .catch((error) => {
+      console.log(error);
+      res.status(500).json({
+        error: error,
+      });
+    });
 });
 
 //Get Wishlist
