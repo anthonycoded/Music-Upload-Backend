@@ -1,0 +1,27 @@
+{
+  "name": "music-upload-backend",
+  "version": "1.0.0",
+  "description": "Upload music to google cloud storage to be streamed from a cfront end client",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/anthonycoded/Music-Upload-Backend.git"
+  },
+  "author": "Shawn Barbel",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/anthonycoded/Music-Upload-Backend/issues"
+  },
+  "homepage": "https://github.com/anthonycoded/Music-Upload-Backend#readme",
+  "dependencies": {
+    "body-parser": "^1.19.0",
+    "cors": "^2.8.5",
+    "express": "^4.17.1",
+    "mongoose": "^5.11.18",
+    "nodemon": "^2.0.7"
+  }
+}
