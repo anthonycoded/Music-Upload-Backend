@@ -2,13 +2,13 @@ let express = require("express");
 let mongoose = require("mongoose");
 let cors = require("cors");
 let bodyParser = require("body-parser");
+require("dotenv").config();
 
 const app = express();
 
 // Express Route
 const trackRoute = require("./routes/track.route");
 
-app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cors());
 app.use("/public", express.static("public"));
@@ -33,7 +33,9 @@ app.listen(PORT, () => {
 //connect to MongoDB Atlas
 mongoose
   .connect(
-    "mongodb+srv://admin:2swisshype@cluster0.uxrqf.mongodb.net/beats?retryWrites=true&w=majority"
+    "mongodb+srv://admin:2swisshype@cluster0.uxrqf.mongodb.net/beats?retryWrites=true&w=majority",
+    { useNewUrlParser: true },
+    { useUnifiedTopology: true }
   )
   .then(() => {
     console.log("Successfully connected to MongoDB Atlas!");

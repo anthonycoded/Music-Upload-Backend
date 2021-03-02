@@ -1,45 +1,102 @@
-let mongoose = require("mongoose"),
-  express = require("express"),
-  multer = require("multer"),
-  router = express.Router();
-
-const bucketName = 'Name of a bucket, e.g. my-bucket';
-const storageClass = 'Name of a storage class, e.g. coldline';
-const location = 'Name of a location, e.g. ASIA';
-
-var multerStorage = multer.memoryStorage();
-var upload = multer({
-  storage: multerStorage,
-  fileFilter: (req, file, cb) => {
-    if (
-      file.mimetype == "audio/mpeg" ||
-      file.mimetype === "audio/mp4" ||
-      file.mimetype == "audio/mpeg"
-    ) {
-      cb(null, true);
-    } else {
-      cb(null, false);
-      return cb(new Error("Only MP3, MP4, or Mpeg format allowed!"));
-    }
-  },
-});
+const mongoose = require("mongoose");
+const express = require("express");
+const Multer = require("multer");
+const router = express.Router();
+const { format } = require("util");
+const mime = require("mime-types");
 
 let trackSchema = require("../Models/track");
 
 // Imports the Google Cloud client library // Creates a client
-const {Storage} = require('@google-cloud/storage');
+const { Storage } = require("@google-cloud/storage");
 const storage = new Storage();
-const bucket = 
-//Create new Wishlist item
-router.post("/upload-track", upload.single("track"), (req, res, next) => {
-  const url = req.protocol + "://" + req.get("host");
+const bucket = storage.bucket("beatdealers.appspot.com");
 
-  
+//Multer upload audio
+const upload = Multer({ storage: Multer.memoryStorage() });
+
+//Multer upload image
+const DIR = "./public/";
+const fileStorage = Multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, "/public/images");
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    cb(null, file.fieldname + "-" + uniqueSuffix);
+  },
+});
+
+//Upload audio and send back id
+router.post("/upload-audio", upload.single("audio"), (req, res, next) => {
+  const type = mime.lookup(req.file.originalname);
+
+  // Create a new blob in the bucket and upload the file data.
+  const blob = bucket.file(`${req.body.title}.${mime.extensions[type][0]}`);
+  const blobStream = blob.createWriteStream({
+    resumable: true,
+    contentType: type,
+  });
+  blobStream.on("error", (err) => {
+    next(err);
+  });
+
+  blobStream.on("finish", () => {
+    const savedName = `https://storage.googleapis.com/beatdealers.appspot.com/${blob.name}`;
+    res.status(201).json({
+      message: "New Track published successfully",
+      newAudio: savedName
+    });
+  });
+
+  blobStream.end(req.file.buffer);
+});
+
+//Upload image, Create new track
+router.post("/upload-track", upload.single("image"), (req, res, next) => {
+  const url = req.protocol + "://" + req.get("host");
+  const track = new trackSchema({
+    _id: new mongoose.Types.ObjectId(),
+    title: req.body.title,
+    description: req.body.description,
+    price: req.body.price,
+    image: url + "/public/",
+    url: req.body.url,
+    plays: 0,
+    likes: 0,
+    downloads: 0,
+    created: new Date(),
+  });
+  track
+    .save()
+    .then((result) => {
+      res.status(201).json({
+        message: "New Track published successfully",
+        newTrack: {
+          _id: result._id,
+          title: result.title,
+          description: result.description,
+          price: result.price,
+          image: url + "/public/",
+          url: req.body.url,
+          plays: 0,
+          likes: 0,
+          downloads: 0,
+          created: new Date(),
+        },
+      });
+    })
+    .catch((error) => {
+      console.log(error);
+      res.status(500).json({
+        error: error,
+      });
+    });
 });
 
 //Get Wishlist
-router.route("/get-wishlist").get((req, res) => {
-  wishSchema.find((error, data) => {
+router.route("/get-tracklist").get((req, res) => {
+  trackSchema.find((error, data) => {
     if (error) {
       return error;
     } else {
@@ -47,9 +104,21 @@ router.route("/get-wishlist").get((req, res) => {
     }
   });
 });
-//Get wish by id
-router.route("/get-wish/:id").get((req, res) => {
-  wishSchema.findById(req.params.id, (error, data) => {
+
+//Get Track including data
+router.route("/get-track").get((req, res) => {
+  trackSchema.find((error, data) => {
+    if (error) {
+      return error;
+    } else {
+      res.json(data);
+    }
+  });
+});
+
+//Get track by id
+router.route("/get-track/:id").get((req, res) => {
+  trackSchema.findById(req.params.id, (error, data) => {
     if (error) {
       return error;
     } else {

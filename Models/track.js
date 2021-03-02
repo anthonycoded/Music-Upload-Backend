@@ -9,9 +9,6 @@ let trackSchema = new Schema(
     title: {
       type: String,
     },
-    genre: {
-      type: String,
-    },
     image: {
       type: String,
     },
@@ -19,7 +16,7 @@ let trackSchema = new Schema(
       type: Number,
     },
     url: {
-      type: Array,
+      type: String,
     },
     plays: {
       type: Number,
