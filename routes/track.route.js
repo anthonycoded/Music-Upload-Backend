@@ -18,21 +18,49 @@ const upload = Multer({ storage: Multer.memoryStorage() });
 //Multer upload image
 const DIR = "./public/";
 const fileStorage = Multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, "/public/images");
+  destination: (req, file, cb) => {
+    cb(null, DIR);
   },
-  filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    cb(null, file.fieldname + "-" + uniqueSuffix);
+  filename: (req, file, cb) => {
+    const fileName = file.originalname.toLowerCase();
+    cb(null, fileName);
   },
 });
+
+const fileFilter = (req, file, cb) => {
+  if (file.fieldname === "track") {
+    if (
+      file.mimetype === "audio/mp3" ||
+      file.mimetype === "audio/mpga" ||
+      file.mimetype === "audio/wav"
+    ) {
+      // check file type to be pdf, doc, or docx
+      cb(null, true);
+    } else {
+      cb(null, false); // else fails
+    }
+  } else {
+    if (
+      file.mimetype == "image/png" ||
+      file.mimetype === "image/jpg" ||
+      file.mimetype == "image/jpeg"
+    ) {
+      cb(null, true);
+    } else {
+      cb(null, false);
+      return cb(new Error("Only .png, .jpg, and.jpeg format allowed!"));
+    }
+  }
+};
+
+const trackUpload = Multer({ storage: fileStorage, fileFilter: fileFilter });
 
 //Upload audio and send back id
 router.post("/upload-audio", upload.single("audio"), (req, res, next) => {
   const type = mime.lookup(req.file.originalname);
 
   // Create a new blob in the bucket and upload the file data.
-  const blob = bucket.file(`${req.body.title}.${mime.extensions[type][0]}`);
+  const blob = bucket.file(`${req.file.originalname}.${mime.extensions[type][0]}`);
   const blobStream = blob.createWriteStream({
     resumable: true,
     contentType: type,
@@ -45,7 +73,7 @@ router.post("/upload-audio", upload.single("audio"), (req, res, next) => {
     const savedName = `https://storage.googleapis.com/beatdealers.appspot.com/${blob.name}`;
     res.status(201).json({
       message: "New Track published successfully",
-      newAudio: savedName
+      newAudio: savedName,
     });
   });
 
@@ -53,14 +81,15 @@ router.post("/upload-audio", upload.single("audio"), (req, res, next) => {
 });
 
 //Upload image, Create new track
-router.post("/upload-track", upload.single("image"), (req, res, next) => {
+router.post("/upload-track", trackUpload.single("image"), (req, res, next) => {
   const url = req.protocol + "://" + req.get("host");
+  const imageUrl = url + "/public/" + req.file.originalname;
   const track = new trackSchema({
     _id: new mongoose.Types.ObjectId(),
     title: req.body.title,
     description: req.body.description,
     price: req.body.price,
-    image: url + "/public/",
+    image: imageUrl,
     url: req.body.url,
     plays: 0,
     likes: 0,
@@ -77,7 +106,7 @@ router.post("/upload-track", upload.single("image"), (req, res, next) => {
           title: result.title,
           description: result.description,
           price: result.price,
-          image: url + "/public/",
+          image: result.image,
           url: req.body.url,
           plays: 0,
           likes: 0,
