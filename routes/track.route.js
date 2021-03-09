@@ -80,7 +80,7 @@ router.post("/upload-track", upload.single("image"), (req, res, next) => {
           plays: 0,
           likes: 0,
           downloads: 0,
-          created: new Date(),
+          created: req.body.created,
         },
       });
     })

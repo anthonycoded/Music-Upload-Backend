@@ -24,12 +24,15 @@ let trackSchema = new Schema(
     likes: {
       type: Number,
     },
+    created: {
+      type: Number,
+    },
     downloads: {
       type: Number,
     },
     tags: {
-        type: String
-    }
+      type: String,
+    },
   },
   {
     collection: "tracks",
