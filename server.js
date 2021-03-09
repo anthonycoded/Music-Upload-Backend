@@ -8,11 +8,13 @@ const app = express();
 
 // Express Route
 const trackRoute = require("./routes/track.route");
+const audioRoute = require("./routes/audio.route");
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cors());
 app.use("/public", express.static("public"));
 app.use("/tracks", trackRoute);
+app.use("/audio", audioRoute);
 
 // 404 Error
 app.use((req, res, next) => {

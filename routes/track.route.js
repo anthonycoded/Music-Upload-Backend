@@ -7,15 +7,8 @@ const mime = require("mime-types");
 
 let trackSchema = require("../Models/track");
 
-// Imports the Google Cloud client library // Creates a client
-const { Storage } = require("@google-cloud/storage");
-const storage = new Storage();
-const bucket = storage.bucket("beatdealers.appspot.com");
 
-//Multer upload audio
-const upload = Multer({ storage: Multer.memoryStorage() });
-
-//Multer upload image
+//Multer Configurations
 const DIR = "./public/";
 const fileStorage = Multer.diskStorage({
   destination: (req, file, cb) => {
@@ -26,7 +19,6 @@ const fileStorage = Multer.diskStorage({
     cb(null, fileName);
   },
 });
-
 const fileFilter = (req, file, cb) => {
   if (file.fieldname === "track") {
     if (
@@ -53,37 +45,14 @@ const fileFilter = (req, file, cb) => {
   }
 };
 
-const trackUpload = Multer({ storage: fileStorage, fileFilter: fileFilter });
+//Multer upload audio
+const upload = Multer({ storage: fileStorage, fileFilter: fileFilter });
 
-//Upload audio and send back id
-router.post("/upload-audio", upload.single("audio"), (req, res, next) => {
-  const type = mime.lookup(req.file.originalname);
-
-  // Create a new blob in the bucket and upload the file data.
-  const blob = bucket.file(`${req.file.originalname}.${mime.extensions[type][0]}`);
-  const blobStream = blob.createWriteStream({
-    resumable: true,
-    contentType: type,
-  });
-  blobStream.on("error", (err) => {
-    next(err);
-  });
-
-  blobStream.on("finish", () => {
-    const savedName = `https://storage.googleapis.com/beatdealers.appspot.com/${blob.name}`;
-    res.status(201).json({
-      message: "New Track published successfully",
-      newAudio: savedName,
-    });
-  });
-
-  blobStream.end(req.file.buffer);
-});
 
 //Upload image, Create new track
-router.post("/upload-track", trackUpload.single("image"), (req, res, next) => {
+router.post("/upload-track", upload.single("image"), (req, res, next) => {
   const url = req.protocol + "://" + req.get("host");
-  const imageUrl = url + "/public/" + req.file.originalname;
+  const imageUrl = url + "/public/" + req.file.filename;
   const track = new trackSchema({
     _id: new mongoose.Types.ObjectId(),
     title: req.body.title,

@@ -14,6 +14,12 @@ const storage = multer.diskStorage({
   },
 });
 
+const audioGraphic = "";
+if (!audioGraphic) {
+  res.status(400).send("No file uploaded.");
+  return;
+}
+
 var upload = multer({
   storage: storage,
   fileFilter: (req, file, cb) => {
@@ -29,6 +35,32 @@ var upload = multer({
     }
   },
 });
+
+const fileFilter = (req, file, cb) => {
+  if (file.fieldname === "track") {
+    if (
+      file.mimetype === "audio/mp3" ||
+      file.mimetype === "audio/mpga" ||
+      file.mimetype === "audio/wav"
+    ) {
+      // check file type to be pdf, doc, or docx
+      cb(null, true);
+    } else {
+      cb(null, false); // else fails
+    }
+  } else {
+    if (
+      file.mimetype == "image/png" ||
+      file.mimetype === "image/jpg" ||
+      file.mimetype == "image/jpeg"
+    ) {
+      cb(null, true);
+    } else {
+      cb(null, false);
+      return cb(new Error("Only .png, .jpg, and.jpeg format allowed!"));
+    }
+  }
+};
 
 let wishSchema = require("../Models/Wish");
 
