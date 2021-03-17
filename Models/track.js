@@ -33,6 +33,12 @@ let trackSchema = new Schema(
     tags: {
       type: String,
     },
+    users: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
   },
   {
     collection: "tracks",
